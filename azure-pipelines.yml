@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-      - workbench  # Replace with the branch name to trigger the pipeline
+      - main  # Replace with the branch name to trigger the pipeline
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -23,14 +23,24 @@ steps:
         # Pull the latest changes from the repo
         git pull origin main
 
-        # Stop and remove all running containers
-        docker rm -f $(docker ps -aq) || true
+        # Stop and remove all running containers (only if there are any)
+        if [ "$(docker ps -aq)" ]; then
+          docker rm -f $(docker ps -aq)
+        else
+          echo "No containers to remove."
+        fi
 
-        # Remove all Docker images
-        docker rmi -f $(docker images -aq) || true
+        # Remove all Docker images (only if there are any)
+        if [ "$(docker images -aq)" ]; then
+          docker rmi -f $(docker images -aq)
+        else
+          echo "No images to remove."
+        fi
 
         # Perform a system prune to clean up unused data
         docker system prune -f || true
+
+        
 
         # Run the application using Docker Compose
         docker-compose -f docker/dev.docker-compose.yml up -d
