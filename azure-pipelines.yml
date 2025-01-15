@@ -1,19 +1,36 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 trigger:
-- main
+  branches:
+    include:
+      - workbench  # Replace with the branch name to trigger the pipeline
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: 'ubuntu-latest'
+
+variables:
+  imageName: 'langflow-app'
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+  # Step 1: Clean Up and Deploy Using Docker Compose
+  - task: SSH@0
+    displayName: 'Clean Up and Deploy Using Docker Compose'
+    inputs:
+      sshEndpoint: 'ssh'  # Use the SSH service connection name
+      runOptions: 'inline'
+      inline: |
+        # Navigate to the deployment directory
+        cd /home/azureuser/langflow
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+        # Pull the latest changes from the repo
+        git pull origin main
+
+        # Stop and remove all running containers
+        docker rm -f $(docker ps -aq) || true
+
+        # Remove all Docker images
+        docker rmi -f $(docker images -aq) || true
+
+        # Perform a system prune to clean up unused data
+        docker system prune -f || true
+
+        # Run the application using Docker Compose
+        docker-compose -f docker/dev.docker-compose.yml up -d
