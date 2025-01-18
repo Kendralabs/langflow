@@ -241,7 +241,7 @@ export const DESCRIPTIONS: string[] = [
   "Generate, Innovate, Communicate.",
   "Conversation Catalyst Engine.",
   "Language Chainlink Master.",
-  "Design Dialogues with Langflow.",
+  "Design Dialogues with Workbench.",
   "Nurture NLP Nodes Here.",
   "Conversational Cartography Unlocked.",
   "Design, Develop, Dialogize.",
