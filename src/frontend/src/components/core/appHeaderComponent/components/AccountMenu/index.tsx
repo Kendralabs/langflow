@@ -95,7 +95,7 @@ export const AccountMenu = () => {
             )}
           </HeaderMenuItemsSection>
           <HeaderMenuItemsSection>
-            {ENABLE_DATASTAX_LANGFLOW ? (
+            {/* {ENABLE_DATASTAX_LANGFLOW ? (
               <HeaderMenuItemLink
                 newPage
                 href="https://github.com/langflow-ai/langflow"
@@ -112,13 +112,13 @@ export const AccountMenu = () => {
               >
                 Share Feedback on Github
               </HeaderMenuItemLink>
-            )}
-            <HeaderMenuItemLink newPage href="https://twitter.com/langflow_ai">
+            )} */}
+            {/* <HeaderMenuItemLink newPage href="https://twitter.com/langflow_ai">
               Follow Langflow on X
             </HeaderMenuItemLink>
             <HeaderMenuItemLink newPage href="https://discord.gg/EqksyE2EX9">
               Join the Langflow Discord
-            </HeaderMenuItemLink>
+            </HeaderMenuItemLink> */}
           </HeaderMenuItemsSection>
           {ENABLE_DATASTAX_LANGFLOW ? (
             <HeaderMenuItemsSection>

@@ -72,7 +72,7 @@ export default function LoginPage(): JSX.Element {
           />
 
           <span className="mb-6 text-2xl font-semibold text-primary">
-            Sign in to Langflow
+            Sign in to Workbench
           </span>
           <div className="mb-3 w-full">
             <Form.Field name="username">

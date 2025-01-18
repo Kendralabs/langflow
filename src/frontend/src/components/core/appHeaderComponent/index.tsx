@@ -124,7 +124,7 @@ export default function AppHeader(): JSX.Element {
         {!ENABLE_DATASTAX_LANGFLOW && (
           <>
             <ShadTooltip
-              content="Go to LangflowStore"
+              content="Go to WorkbenchStore"
               side="bottom"
               styleClasses="z-10"
             >

@@ -95,7 +95,7 @@ export default function SignUp(): JSX.Element {
             chainClassName="mb-4 text-5xl"
           />
           <span className="mb-6 text-2xl font-semibold text-primary">
-            Sign up for Langflow
+            Sign up for Workbench
           </span>
           <div className="mb-3 w-full">
             <Form.Field name="username">
