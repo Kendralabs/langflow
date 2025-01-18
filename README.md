@@ -1,5 +1,4 @@
 <!-- markdownlint-disable MD030 -->
-#test
 #
 ![Langflow](./docs/static/img/hero.png)
 
