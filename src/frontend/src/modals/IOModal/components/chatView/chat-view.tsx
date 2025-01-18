@@ -1,5 +1,5 @@
-import { TextEffectPerChar } from "@/components/ui/textAnimation";
 import Logo from "@/components/common/kendraLabsLogo";
+import { TextEffectPerChar } from "@/components/ui/textAnimation";
 import { track } from "@/customization/utils/analytics";
 import { useMessagesStore } from "@/stores/messagesStore";
 import { useUtilityStore } from "@/stores/utilityStore";
