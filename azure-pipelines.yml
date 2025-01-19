@@ -47,9 +47,13 @@ steps:
         docker-compose -f docker/dev.docker-compose.yml up --build -d >/dev/null 2>&1
 
 
+        echo "Waiting for containers to stabilize..."
+        sleep 10  # Adjust the time as necessary
+
+        # Reload Nginx to apply new changes, hide logs
         echo "Reloading Nginx to apply new changes..."
-        sudo nginx -t  # Test the Nginx configuration for syntax errors
-        sudo systemctl reload nginx
+        sudo nginx -t > /dev/null 2>&1  # Test the Nginx configuration and hide output
+        sudo systemctl reload nginx > /dev/null 2>&1  
         
         # Check if the containers are running properly
         running_containers=$(docker ps -q -f name=dev-langflow)
