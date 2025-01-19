@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-      - workbench  # Trigger pipeline only on workbench branch
+      - workbench  # Replace with the branch name to trigger the pipeline
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -11,9 +11,9 @@ variables:
 
 steps:
   - task: SSH@0
-    displayName: 'Deploy Latest Changes from Workbench Branch'
+    displayName: 'Clean Up and Deploy Using Docker Compose'
     inputs:
-      sshEndpoint: 'ssh'  # Replace with the actual SSH service connection name
+      sshEndpoint: 'ssh'  # Use the SSH service connection name
       runOptions: 'inline'
       inline: |
         # Navigate to the deployment directory
@@ -21,41 +21,43 @@ steps:
 
         # Ensure the correct branch and pull the latest changes
         echo "Ensuring we are on the correct branch and fetching latest changes..."
-        git fetch origin workbench
-        git checkout workbench || git checkout -b workbench origin/workbench
-        git reset --hard origin/workbench  # Ensure local branch matches remote exactly
-        git log -1  # Display the latest commit for debugging
+        git fetch origin workbench >/dev/null 2>&1
+        git checkout workbench >/dev/null 2>&1 || git checkout -b workbench origin/workbench >/dev/null 2>&1
+        git reset --hard origin/workbench >/dev/null 2>&1  # Ensure local branch matches remote exactly
+        git log -1  # Log the latest commit
 
-        # Stop and clean up all running containers (if any)
-        echo "Stopping and removing existing Docker containers..."
-        if [ "$(docker ps -q)" ]; then
-          docker rm -f $(docker ps -q) || true
+        # Stop and remove all running containers (only if there are any)
+        if [ "$(docker ps -aq)" ]; then
+          docker rm -f $(docker ps -aq) >/dev/null 2>&1 || true
         else
-          echo "No containers to stop."
+          echo "No containers to remove." >/dev/null
         fi
 
-        # Remove all unused Docker images (if any)
-        echo "Removing unused Docker images..."
-        if [ "$(docker images -q)" ]; then
-          docker rmi -f $(docker images -q) || true
+        # Remove all Docker images (only if there are any)
+        if [ "$(docker images -aq)" ]; then
+          docker rmi -f $(docker images -aq) >/dev/null 2>&1 || true
         else
-          echo "No images to remove."
+          echo "No images to remove." >/dev/null
         fi
 
-        # Perform a Docker system prune to clean up resources
-        echo "Performing system prune to clean up unused resources..."
-        docker system prune -f || true
+        # Perform a system prune to clean up unused data
+        docker system prune -f >/dev/null 2>&1 || true
 
-        # Rebuild and start containers with Docker Compose
-        echo "Rebuilding and starting containers with Docker Compose..."
-        docker-compose -f docker/dev.docker-compose.yml up --build -d
+        # Rebuild and start the containers with Docker Compose
+        docker-compose -f docker/dev.docker-compose.yml up --build -d >/dev/null 2>&1
 
-        # Verify that the containers are running
-        echo "Checking if the containers are running..."
-        if [ "$(docker ps -q -f name=dev-langflow)" ]; then
+
+        echo "Reloading Nginx to apply new changes..."
+        sudo nginx -t  # Test the Nginx configuration for syntax errors
+        sudo systemctl reload nginx
+        
+        # Check if the containers are running properly
+        running_containers=$(docker ps -q -f name=dev-langflow)
+
+        if [ -n "$running_containers" ]; then
           echo "Containers are running successfully."
-          exit 0  # Success
+          exit 0  # Explicitly exit with 0 to indicate success
         else
           echo "Containers are not running. Exiting with error."
-          exit 1  # Failure
+          exit 1  # Force the pipeline to fail if containers are not running
         fi
