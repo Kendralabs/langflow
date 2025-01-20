@@ -11,26 +11,28 @@ variables:
   dockerHubRepository: 'kendralabs/workbench-azure'
 
 steps:
-  # Step 1: Build Docker Images using Docker Compose
   - task: DockerCompose@1
     displayName: 'Build Docker Images'
     inputs:
-      containerregistrytype: 'Container Registry'
-      dockerRegistryEndpoint: 'docker'  # Your Docker service connection
+      containerregistrytype: 'Container Registry'  # Specify the container registry type
+      dockerRegistryEndpoint: 'docker'  # Name of your Docker service connection
       dockerComposeFile: '**/dev.docker-compose.yml'  # Path to your Docker Compose file
-      action: 'Build services'
-      buildImages: true
-      tags: '$(Build.BuildId)'  # Tag with the build ID
+      projectName: 'langflow'  # Valid project name (lowercase, alphanumeric, hyphen, or underscore)
+      action: 'Build services'  # Build the services defined in the Docker Compose file
+      includeSourceTags: true  # Include source tags in the built images
+      includeLatestTag: true  # Include the "latest" tag for the images
 
-  # Step 2: Push Docker Images to Docker Hub
-  - task: Docker@2
-    displayName: 'Push Docker Images to Docker Hub'
+  # Step 2: Push Docker images to the container registry
+  - task: DockerCompose@1
+    displayName: 'Push Docker Images'
     inputs:
-      command: 'push'
-      containerRegistry: 'docker'  # Docker service connection
-      repository: $(dockerHubRepository)  # Docker Hub repository
-      tags: '$(Build.BuildId)'  # Tag with build ID
-
+      containerregistrytype: 'Container Registry'  # Specify the container registry type
+      dockerRegistryEndpoint: 'docker'  # Name of your Docker service connection
+      dockerComposeFile: '**/dev.docker-compose.yml'  # Path to your Docker Compose file
+      projectName: 'langflow'  # Valid project name (lowercase, alphanumeric, hyphen, or underscore)
+      action: 'Push services'  # Push the built services (images) to the container registry
+      includeSourceTags: true  # Include source tags in the pushed images
+      includeLatestTag: true
   # Step 3: Deploy Containers Using Docker Compose
   - task: SSH@0
     displayName: 'Deploy Docker Containers'
