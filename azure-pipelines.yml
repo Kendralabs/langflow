@@ -1,62 +1,53 @@
 trigger:
   branches:
     include:
-      - workbench  # Trigger the pipeline on changes to the workbench branch
+      - workbench  # Trigger the pipeline on the workbench branch
 
 pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  dockerHubRegistry: 'docker'  # Your Docker service connection
-  dockerHubRepository: 'kendralabs/workbench-azure'  # Your Docker Hub repository
-  tag: 'latest'  # Tag for the Docker images (you can adjust as needed)
+  imageName: 'langflow-app'
+  dockerHubRepository: 'kendralabs/workbench-azure'
 
 steps:
   # Step 1: Build Docker Images using Docker Compose
-  - script: |
-      echo "Building Docker images using Docker Compose..."
-      docker-compose -f $(Build.SourcesDirectory)/docker/dev.docker-compose.yml build --no-cache
-    displayName: 'Build Docker Images using Docker Compose'
+  - task: DockerCompose@1
+    displayName: 'Build Docker Images'
+    inputs:
+      containerregistrytype: 'Container Registry'
+      dockerRegistryEndpoint: 'docker'  # Your Docker service connection
+      dockerComposeFile: '**/dev.docker-compose.yml'  # Path to your Docker Compose file
+      action: 'Build services'
+      buildImages: true
+      tags: '$(Build.BuildId)'  # Tag with the build ID
 
   # Step 2: Push Docker Images to Docker Hub
-  - script: |
-      echo "Pushing Docker images to Docker Hub..."
-      docker tag dev-langflow $(dockerHubRegistry)/$(dockerHubRepository):$(tag)
-      docker tag postgres $(dockerHubRegistry)/$(dockerHubRepository):$(tag)
-      docker push $(dockerHubRegistry)/$(dockerHubRepository):$(tag)
+  - task: Docker@2
     displayName: 'Push Docker Images to Docker Hub'
-
-  # Step 3: Deploy the Images using Docker Compose (Zero Downtime)
-  - task: SSH@0
-    displayName: 'Deploy Using Docker Compose (Zero Downtime)'
     inputs:
-      sshEndpoint: 'ssh'  # SSH service connection for your VM
+      command: 'push'
+      containerRegistry: 'docker'  # Docker service connection
+      repository: $(dockerHubRepository)  # Docker Hub repository
+      tags: '$(Build.BuildId)'  # Tag with build ID
+
+  # Step 3: Deploy Containers Using Docker Compose
+  - task: SSH@0
+    displayName: 'Deploy Docker Containers'
+    inputs:
+      sshEndpoint: 'ssh'  # Your SSH service connection
       runOptions: 'inline'
       inline: |
         # Navigate to the directory containing the Docker Compose file
         cd /home/azureuser/langflow || exit 1
-
-        # Pull the latest images from Docker Hub
-        echo "Pulling latest images from Docker Hub..."
+        
+        # Pull the latest images
         docker-compose -f /home/azureuser/langflow/docker/dev.docker-compose.yml pull
-
-        # Perform rolling update with Docker Compose (ensure zero downtime)
-        echo "Rolling update with Docker Compose..."
-        docker-compose -f /home/azureuser/langflow/docker/dev.docker-compose.yml up -d
-
-        # Check that the containers are running
-        running_containers=$(docker ps -q -f name=dev-langflow)
-
-        if [ -n "$running_containers" ]; then
-          echo "Containers are running successfully."
-        else
-          echo "Containers are not running. Exiting with error."
-          exit 1  # Fail the pipeline if containers are not running
-        fi
-
-        # Optionally, clean up old containers
-        echo "Removing old containers..."
+        
+        # Stop and remove old containers
         docker-compose -f /home/azureuser/langflow/docker/dev.docker-compose.yml down
-
-        # Clean up unused Docker images and volumes (optional)
-        docker system prune -f || true
+        
+        # Start containers with new images
+        docker-compose -f /home/azureuser/langflow/docker/dev.docker-compose.yml up -d
+        
+        echo "Deployment completed successfully."
