@@ -1,67 +1,89 @@
 trigger:
   branches:
     include:
-      - workbench  # Replace with the branch name to trigger the pipeline
+      - workbench  # Trigger the pipeline when changes are pushed to the 'workbench' branch
 
 pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  imageName: 'langflow-app'
+  dockerRegistry: 'docker'  # Docker service connection name
+  dockerRepository: 'kendralabs/workbench-azure'  # Your Docker Hub repository
+  tag: $(Build.BuildId)  # Unique tag for the image based on the build ID
+  dockerComposeFile: 'docker/dev.docker-compose.yml'  # Path to your Docker Compose file
+  deploymentDirectory: '/home/azureuser/langflow'  # Directory where your Docker Compose file is located
 
 steps:
-  - task: SSH@0
-    displayName: 'Clean Up and Deploy Using Docker Compose'
-    inputs:
-      sshEndpoint: 'ssh'  # Use the SSH service connection name
-      runOptions: 'inline'
-      inline: |
-        # Navigate to the deployment directory
-        cd /home/azureuser/langflow || exit 1
+# Step 1: Build and Push Docker Images using Docker Compose
+- task: Docker@2
+  displayName: 'Build and Push Docker Images'
+  inputs:
+    containerRegistry: $(dockerRegistry)  # Docker service connection
+    repository: $(dockerRepository)  # Repository in Docker Hub
+    tags: $(tag)  # Tag the image with the build ID
+    buildContext: '.'  # Build context should be the root of your repo
+    command: 'buildAndPush'  # This will both build and push the images
 
-        # Ensure the correct branch and pull the latest changes
-        echo "Ensuring we are on the correct branch and fetching latest changes..."
-        git fetch origin workbench >/dev/null 2>&1
-        git checkout workbench >/dev/null 2>&1 || git checkout -b workbench origin/workbench >/dev/null 2>&1
-        git reset --hard origin/workbench >/dev/null 2>&1  # Ensure local branch matches remote exactly
-        git log -1  # Log the latest commit
+# Step 2: SSH to the VM and Remove Old Docker Images and Clean Cache
+- task: SSH@0
+  displayName: 'Clean Old Docker Images and Cache'
+  inputs:
+    sshEndpoint: 'ssh'  # SSH service connection to your VM
+    runOptions: 'inline'
+    inline: |
+      echo "Removing old Docker images and cleaning cache..."
 
-        # Stop and remove all running containers (only if there are any)
-        if [ "$(docker ps -aq)" ]; then
-          docker rm -f $(docker ps -aq) >/dev/null 2>&1 || true
-        else
-          echo "No containers to remove." >/dev/null
-        fi
+      cd $(deploymentDirectory) || exit 1
 
-        # Remove all Docker images (only if there are any)
-        if [ "$(docker images -aq)" ]; then
-          docker rmi -f $(docker images -aq) >/dev/null 2>&1 || true
-        else
-          echo "No images to remove." >/dev/null
-        fi
+      # Remove unused images
+      docker image prune -f || true  # Remove unused images
 
-        # Perform a system prune to clean up unused data
-        docker system prune -f >/dev/null 2>&1 || true
+      # Remove any stopped containers
+      docker container prune -f || true  # Remove stopped containers
 
-        # Rebuild and start the containers with Docker Compose
-        docker-compose -f docker/dev.docker-compose.yml up --build -d >/dev/null 2>&1
+      # Remove old images if any (optional)
+      docker rmi $(docker images -q) || true  # Remove old images
 
+      # Clean up unused volumes, networks, and dangling images
+      docker system prune -af || true  # Clean all unused Docker objects
 
-        echo "Waiting for containers to stabilize..."
-        sleep 10  # Adjust the time as necessary
+      echo "Docker images and cache cleaned."
 
-        # Reload Nginx to apply new changes, hide logs
-        echo "Reloading Nginx to apply new changes..."
-        sudo nginx -t > /dev/null 2>&1  # Test the Nginx configuration and hide output
-        sudo systemctl reload nginx > /dev/null 2>&1  
-        
-        # Check if the containers are running properly
-        running_containers=$(docker ps -q -f name=dev-langflow)
+# Step 3: Pull Latest Docker Images from Docker Hub
+- task: SSH@0
+  displayName: 'Pull Latest Docker Images from Docker Hub'
+  inputs:
+    sshEndpoint: 'ssh'  # SSH service connection to your VM
+    runOptions: 'inline'
+    inline: |
+      echo "Pulling the latest images from Docker Hub..."
+      cd $(deploymentDirectory) || exit 1
 
-        if [ -n "$running_containers" ]; then
-          echo "Containers are running successfully."
-          exit 0  # Explicitly exit with 0 to indicate success
-        else
-          echo "Containers are not running. Exiting with error."
-          exit 1  # Force the pipeline to fail if containers are not running
-        fi
+      # Pull the latest Docker images for all services defined in docker-compose.yml
+      docker-compose -f $(dockerComposeFile) pull
+
+      echo "Docker images pulled successfully."
+
+# Step 4: Perform a Rolling Deployment using Docker Compose
+- task: SSH@0
+  displayName: 'Rolling Deployment using Docker Compose'
+  inputs:
+    sshEndpoint: 'ssh'  # SSH service connection to your VM
+    runOptions: 'inline'
+    inline: |
+      echo "Starting Rolling Deployment..."
+      
+      cd $(deploymentDirectory) || exit 1
+      
+      # Perform the rolling update by starting only the new/updated containers
+      docker-compose -f $(dockerComposeFile) up -d --no-deps --build
+      
+      # Check if the containers are running properly
+      running_containers=$(docker ps -q -f name=dev-langflow)
+      
+      if [ -n "$running_containers" ]; then
+        echo "Containers are running successfully."
+        exit 0  # Success
+      else
+        echo "Containers are not running. Exiting with error."
+        exit 1  # Failure
