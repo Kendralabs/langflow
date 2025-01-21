@@ -11,29 +11,35 @@ variables:
   dockerHubRepository: 'kendralabs/workbench-azure'
 
 steps:
+  # Step 1: Build Docker Images
   - task: DockerCompose@1
     displayName: 'Build Docker Images'
     inputs:
       containerregistrytype: 'Container Registry'  # Specify the container registry type
       dockerRegistryEndpoint: 'docker'  # Name of your Docker service connection
       dockerComposeFile: '**/dev.docker-compose.yml'  # Path to your Docker Compose file
-      projectName: 'langflow'  # Valid project name (lowercase, alphanumeric, hyphen, or underscore)
       action: 'Build services'  # Build the services defined in the Docker Compose file
-      includeSourceTags: true  # Include source tags in the built images
-      includeLatestTag: true  # Include the "latest" tag for the images
-
-  # Step 2: Push Docker images to the container registry
-  - task: DockerCompose@1
-    displayName: 'Push Docker Images'
-    inputs:
-      containerregistrytype: 'Container Registry'  # Specify the container registry type
-      dockerRegistryEndpoint: 'docker'  # Name of your Docker service connection
-      dockerComposeFile: '**/dev.docker-compose.yml'  # Path to your Docker Compose file
       projectName: 'langflow'  # Valid project name (lowercase, alphanumeric, hyphen, or underscore)
-      action: 'Push services'  # Push the built services (images) to the container registry
-      includeSourceTags: true  # Include source tags in the pushed images
-      includeLatestTag: true
-  # Step 3: Deploy Containers Using Docker Compose
+      includeSourceTags: false  # Disable source tags as we want custom tagging
+      includeLatestTag: false  # Disable default "latest" tagging
+
+  # Step 2: Tag Docker Image (langflow)
+  - script: |
+      # Tag the langflow image with the correct repository
+      docker tag dev-langflow:latest $(dockerHubRepository):langflow-latest
+    displayName: 'Tag Docker Image'
+    env:
+      dockerHubRepository: $(dockerHubRepository)
+
+  # Step 3: Push Docker Images
+  - script: |
+      # Push the langflow image to Docker Hub
+      docker push $(dockerHubRepository):langflow-latest
+    displayName: 'Push Docker Image to Docker Hub'
+    env:
+      dockerHubRepository: $(dockerHubRepository)
+
+  # Step 4: Deploy Containers Using Docker Compose
   - task: SSH@0
     displayName: 'Deploy Docker Containers'
     inputs:
