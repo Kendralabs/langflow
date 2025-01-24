@@ -1,42 +1,41 @@
+version: '3.8'
+
 networks:
   dev-langflow:
+    driver: bridge  # Network for isolation in dev environment
 
 services:
   langflow:
     build:
       context: ..
-      dockerfile: docker/dev.Dockerfile
-    image: dev-langflow
-    container_name: dev-langflow
-    restart: always
+      dockerfile: docker/dev.Dockerfile  # Dockerfile specific for dev environment
+    image: dev-langflow  # Image name specific to dev
+    container_name: dev-langflow  # Container name specific to dev
+    restart: always  # Always restart the container if it fails
     ports:
-      - "7860:7860"
-      - "3000:3000"
+      - "7861:7860"  # Changed port mappings for dev to avoid conflict (7861 on host)
+      - "3001:3000"  # Changed port mappings for dev to avoid conflict (3001 on host)
     environment:
-      - PYTHONDONTWRITEBYTECODE=1
-      - LANGFLOW_DATABASE_URL=postgresql://langflow:langflow@postgres:5432/langflow
-      - LANGFLOW_SUPERUSER=langflow
-      - LANGFLOW_SUPERUSER_PASSWORD=langflow
-      - LANGFLOW_CONFIG_DIR=/var/lib/langflow
-    # env_file:
-    #  - ../.env
+      - PYTHONDONTWRITEBYTECODE=1  # Avoid writing bytecode
+      - LANGFLOW_DATABASE_URL=postgresql://langflow:langflow@postgres:5432/langflow  # Dev DB URL
+      - LANGFLOW_SUPERUSER=langflow  # Superuser credentials for dev
+      - LANGFLOW_SUPERUSER_PASSWORD=langflow  # Superuser password for dev
+      - LANGFLOW_CONFIG_DIR=/var/lib/langflow  # Config directory path
     volumes:
-      - ../:/app
+      - ../:/app  # Mount the project directory for dev container
     depends_on:
-      - postgres
+      - postgres  # Ensure postgres is ready before starting langflow
     networks:
-      -  dev-langflow
-
+      - dev-langflow  # Attach to dev-specific network
 
   postgres:
-    container_name: postgres
-    image: pgvector/pgvector:pg16
+    container_name: postgres  # Name the container appropriately
+    image: pgvector/pgvector:pg16  # Use PGVector image for dev
     environment:
-      POSTGRES_USER: langflow
-      POSTGRES_PASSWORD: langflow
-      POSTGRES_DB: langflow
+      POSTGRES_USER: langflow  # DB user for dev environment
+      POSTGRES_PASSWORD: langflow  # Password for DB user in dev
+      POSTGRES_DB: langflow  # DB name for dev
     ports:
-      - "5432:5432"
+      - "5433:5432"  # Changed port for PostgreSQL (5433 on host to avoid conflict)
     networks:
-      -  dev-langflow
-
+      - dev-langflow  # Attach to dev-specific network

@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-      - workbench  # Replace with the branch name to trigger the pipeline
+      - workbench-qa  # Trigger the pipeline on dev branch (workbench-qa)
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -20,48 +20,43 @@ steps:
         cd /home/azureuser/langflow || exit 1
 
         # Ensure the correct branch and pull the latest changes
-        echo "Ensuring we are on the correct branch and fetching latest changes..."
-        git fetch origin workbench >/dev/null 2>&1
-        git checkout workbench >/dev/null 2>&1 || git checkout -b workbench origin/workbench >/dev/null 2>&1
-        git reset --hard origin/workbench >/dev/null 2>&1  # Ensure local branch matches remote exactly
-        git log -1  # Log the latest commit
+        echo "Switching to dev branch and fetching updates..."
+        git fetch origin workbench-qa
+        git checkout workbench-qa || git checkout -b workbench-qa origin/workbench-qa
+        git reset --hard origin/workbench-qa
 
-        # Stop and remove all running containers (only if there are any)
-        if [ "$(docker ps -aq)" ]; then
-          docker rm -f $(docker ps -aq) >/dev/null 2>&1 || true
-        else
-          echo "No containers to remove." >/dev/null
-        fi
+        # Stop and remove dev-related containers
+        echo "Removing dev containers..."
+        docker ps -aq -f name=dev-langflow | xargs -r docker rm -f || echo "No dev containers to remove."
 
-        # Remove all Docker images (only if there are any)
-        if [ "$(docker images -aq)" ]; then
-          docker rmi -f $(docker images -aq) >/dev/null 2>&1 || true
-        else
-          echo "No images to remove." >/dev/null
-        fi
+        # Remove dev-related Docker images
+        echo "Removing dev images..."
+        docker images -aq -f reference=dev-langflow | xargs -r docker rmi -f || echo "No dev images to remove."
 
-        # Perform a system prune to clean up unused data
-        docker system prune -f >/dev/null 2>&1 || true
+        # Clean up unused data
+        echo "Performing system prune..."
+        docker system prune -f
 
-        # Rebuild and start the containers with Docker Compose
-        docker-compose -f docker/dev.docker-compose.yml up --build -d >/dev/null 2>&1
+        # Rebuild and start the containers for dev
+        echo "Starting dev environment..."
+        docker-compose -f docker/dev.docker-compose.yml up --build -d
 
-
+        # Wait for the containers to stabilize
         echo "Waiting for containers to stabilize..."
-        sleep 10  # Adjust the time as necessary
+        sleep 10
 
-        # Reload Nginx to apply new changes, hide logs
-        echo "Reloading Nginx to apply new changes..."
-        sudo nginx -t > /dev/null 2>&1  # Test the Nginx configuration and hide output
+        # Reload Nginx to apply changes
+        echo "Reloading Nginx..."
+        sudo nginx -t > /dev/null 2>&1
         sudo systemctl reload nginx > /dev/null 2>&1  
-        
-        # Check if the containers are running properly
+
+        # Verify if the dev containers are running
         running_containers=$(docker ps -q -f name=dev-langflow)
 
         if [ -n "$running_containers" ]; then
-          echo "Containers are running successfully."
-          exit 0  # Explicitly exit with 0 to indicate success
+          echo "Dev containers are running successfully."
+          exit 0  # Success
         else
-          echo "Containers are not running. Exiting with error."
-          exit 1  # Force the pipeline to fail if containers are not running
+          echo "Dev containers are not running."
+          exit 1  # Failure
         fi
