@@ -83,7 +83,7 @@ export default function SettingsPage(): JSX.Element {
         ),
       },
       {
-        title: "Langflow Store",
+        title: "Kendra Store",
         href: "/settings/store",
         icon: (
           <ForwardedIconComponent

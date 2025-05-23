@@ -1,29 +1,27 @@
 services:
-  langflow:
-    image: langflowai/langflow:latest # or another version tag on https://hub.docker.com/r/langflowai/langflow
-    pull_policy: always               # set to 'always' when using 'latest' image
+  langflow-backend:
+    image: kendralabs/workbench-backend:1.3.5 # or another version tag on https://hub.docker.com/r/langflowai/langflow
+    #pull_policy: always               # set to 'always' when using 'latest' image
     ports:
       - "7860:7860"
-    depends_on:
-      - postgres
     environment:
-      - LANGFLOW_DATABASE_URL=postgresql://langflow:langflow@postgres:5432/langflow
+      #- LANGFLOW_DATABASE_URL=postgresql://langflow:langflow@localhost:5432/langflow
+      - LANGFLOW_DATABASE_URL=postgresql://sandboxuser:sandboxuser123@workbench-db.postgres.database.azure.com:5432/workbenchsandbox
       # This variable defines where the logs, file storage, monitor data and secret keys are stored.
       - LANGFLOW_CONFIG_DIR=app/langflow
+      - LANGFLOW_AUTO_LOGIN=false
+      - LANGFLOW_SUPERUSER=superadmin
+      - LANGFLOW_SUPERUSER_PASSWORD=superadmin
     volumes:
       - langflow-data:/app/langflow
-
-  postgres:
-    image: postgres:16
+  langflow-frontend:
+    image: langflow_frontend:1.3.5 # or another version tag on https://hub.docker.com/r/langflowai/
+    depends_on:
+      - langflow-backend
     environment:
-      POSTGRES_USER: langflow
-      POSTGRES_PASSWORD: langflow
-      POSTGRES_DB: langflow
+      - BACKEND_URL=http://langflow-backend:7860
+    #pull_policy: always               # set to 'always' when using 'latest' image
     ports:
-      - "5432:5432"
-    volumes:
-      - langflow-postgres:/var/lib/postgresql/data
-
+      - "80:80"   
 volumes:
-  langflow-postgres:
   langflow-data:

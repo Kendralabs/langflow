@@ -9,6 +9,7 @@ RUN npm run build
 
 FROM nginx
 COPY --from=frontend_build /app/build/ /usr/share/nginx/html
+COPY ./src/userapp /usr/share/nginx/html/userapp
 COPY /nginx.conf /etc/nginx/conf.d/default.conf
 COPY start-nginx.sh /start-nginx.sh
 RUN chmod +x /start-nginx.sh

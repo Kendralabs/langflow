@@ -95,7 +95,7 @@ export default function AppHeader(): JSX.Element {
                 window.open("https://github.com/langflow-ai/langflow", "_blank")
               }
             >
-              <GithubStarComponent />
+              
             </Button>
           </>
         )}
@@ -139,7 +139,7 @@ export default function AppHeader(): JSX.Element {
         {!ENABLE_DATASTAX_LANGFLOW && (
           <>
             <ShadTooltip
-              content="Go to Langflow Store"
+              content="Go to Kendra Store"
               side="bottom"
               styleClasses="z-10"
             >
