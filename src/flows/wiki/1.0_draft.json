@@ -401,7 +401,7 @@
                 "show": true,
                 "title_case": false,
                 "type": "str",
-                "value": "9MzIFpvAESkE3SPp1BFCYiIJBuKALysB9EWKAXetJCyUQ2xSjsPWJQQJ99BEACHYHv6XJ3w3AAAAACOGqigm"
+                "value": ""
               },
               "api_version": {
                 "_input_type": "DropdownInput",
@@ -1889,7 +1889,7 @@
                 "show": true,
                 "title_case": false,
                 "type": "str",
-                "value": "9MzIFpvAESkE3SPp1BFCYiIJBuKALysB9EWKAXetJCyUQ2xSjsPWJQQJ99BEACHYHv6XJ3w3AAAAACOGqigm"
+                "value": ""
               },
               "api_version": {
                 "_input_type": "DropdownInput",
@@ -2118,7 +2118,7 @@
                 "allows_loop": false,
                 "cache": true,
                 "display_name": "DataFrame",
-                "hidden": false,
+                "hidden": null,
                 "method": "as_dataframe",
                 "name": "dataframe",
                 "options": null,
@@ -2916,7 +2916,7 @@
                 "show": true,
                 "title_case": false,
                 "type": "str",
-                "value": "AstraCS:mPWCwnZCjlcRNkTlUoossBNG:229962994c0d1af3b9e6873c325dbf516378ab29d1355d4d6efbe35459eea90e"
+                "value": ""
               }
             },
             "tool_mode": false
@@ -3185,7 +3185,7 @@
                 "show": true,
                 "title_case": false,
                 "type": "str",
-                "value": "https://68df048f-af75-452a-b0c4-1ab5d314f995-us-east-2.apps.astra.datastax.com"
+                "value": ""
               },
               "code": {
                 "advanced": true,
@@ -3281,7 +3281,7 @@
                 "show": true,
                 "title_case": false,
                 "type": "str",
-                "value": "AstraCS:YZFpleUlEqGflePWIRomuHSP:1c7b851c4f36aab77d51b1fc6e934ec6cd3afbf1d1ca07d4badc30a4d9172ac1"
+                "value": ""
               }
             },
             "tool_mode": false

@@ -346,7 +346,7 @@
                 "show": true,
                 "title_case": false,
                 "type": "str",
-                "value": "9MzIFpvAESkE3SPp1BFCYiIJBuKALysB9EWKAXetJCyUQ2xSjsPWJQQJ99BEACHYHv6XJ3w3AAAAACOGqigm"
+                "value": ""
               },
               "api_version": {
                 "_input_type": "DropdownInput",
@@ -1616,7 +1616,7 @@
                 "show": true,
                 "title_case": false,
                 "type": "str",
-                "value": "9MzIFpvAESkE3SPp1BFCYiIJBuKALysB9EWKAXetJCyUQ2xSjsPWJQQJ99BEACHYHv6XJ3w3AAAAACOGqigm"
+                "value": ""
               },
               "api_version": {
                 "_input_type": "DropdownInput",
@@ -1845,7 +1845,7 @@
                 "allows_loop": false,
                 "cache": true,
                 "display_name": "DataFrame",
-                "hidden": false,
+                "hidden": null,
                 "method": "as_dataframe",
                 "name": "dataframe",
                 "options": null,
@@ -2654,7 +2654,7 @@
                 "show": true,
                 "title_case": false,
                 "type": "str",
-                "value": "AstraCS:mPWCwnZCjlcRNkTlUoossBNG:229962994c0d1af3b9e6873c325dbf516378ab29d1355d4d6efbe35459eea90e"
+                "value": ""
               }
             },
             "tool_mode": false
@@ -2983,7 +2983,7 @@
       "zoom": 0.32974630893911355
     }
   },
-  "description": "Load documents from GDrive, Store them in Vector DB, AI agent answer questions.",
+  "description": "Catalyzing Business Growth through Conversational AI.",
   "endpoint_name": null,
   "id": "5f9cd69c-2707-455a-9f24-5e30396741d1",
   "is_component": false,
